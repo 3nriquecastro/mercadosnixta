@@ -1,7 +1,10 @@
 {
-  "name": "my-project",
+  "name": "mercados-nixta-pos",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -29,13 +32,10 @@
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.4",
     "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.1.6",
     "postcss": "^8.5.8",
     "tailwindcss": "4.1.18",
     "typescript": "^5.9.3"
-  },
-  "pnpm": {
-    "overrides": {
-      "hono": "4.12.25"
-    }
   }
 }

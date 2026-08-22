@@ -304,6 +304,7 @@ export function SaleWorkspace({ products }: Props) {
       </Dialog>
 
       <CustomizeDialog
+        key={selectedProduct?.id ?? "no-product"}
         product={selectedProduct}
         open={customizeOpen}
         onOpenChange={(open) => {
@@ -317,6 +318,7 @@ export function SaleWorkspace({ products }: Props) {
       />
 
       <PaymentDialog
+        key={paymentOpen ? "open" : "closed"}
         open={paymentOpen}
         onOpenChange={setPaymentOpen}
         total={total}

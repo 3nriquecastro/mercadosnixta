@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -36,27 +36,12 @@ export function InventoryManager({ products, inventory }: Props) {
     [eligibleProducts, inventoryIds],
   )
   const [selectedProductId, setSelectedProductId] = useState("")
+  const availableProductId = availableProducts.some((product) => product.id === selectedProductId)
+    ? selectedProductId
+    : (availableProducts[0]?.id ?? "")
   const [stocks, setStocks] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
   const [trackingBusy, setTrackingBusy] = useState<string | null>(null)
-
-  useEffect(() => {
-    setStocks((current) => {
-      const next = { ...current }
-      for (const product of inventoriedProducts) {
-        if (!(product.id in next)) {
-          next[product.id] = String(inventoryById.get(product.id)?.opening_stock ?? 0)
-        }
-      }
-      return next
-    })
-  }, [inventoriedProducts, inventoryById])
-
-  useEffect(() => {
-    if (!availableProducts.some((product) => product.id === selectedProductId)) {
-      setSelectedProductId(availableProducts[0]?.id ?? "")
-    }
-  }, [availableProducts, selectedProductId])
 
   async function changeDailyInventory(productId: string, add: boolean) {
     setTrackingBusy(productId)
@@ -88,7 +73,7 @@ export function InventoryManager({ products, inventory }: Props) {
     const result = await saveInventoryOpening(
       inventoriedProducts.map((product) => ({
         product_id: product.id,
-        opening_stock: Number(stocks[product.id] ?? 0) || 0,
+        opening_stock: Number(stocks[product.id] ?? inventoryById.get(product.id)?.opening_stock ?? 0) || 0,
       })),
     )
     setBusy(false)
@@ -115,7 +100,7 @@ export function InventoryManager({ products, inventory }: Props) {
         {availableProducts.length > 0 && (
           <div className="flex w-full gap-2 sm:w-auto">
             <select
-              value={selectedProductId}
+              value={availableProductId}
               onChange={(event) => setSelectedProductId(event.target.value)}
               className="h-12 min-w-0 flex-1 rounded-xl border border-input bg-background px-3 text-sm sm:w-56"
               aria-label="Producto para agregar al inventario"
@@ -128,8 +113,8 @@ export function InventoryManager({ products, inventory }: Props) {
             </select>
             <Button
               className="h-12 shrink-0"
-              disabled={!selectedProductId || trackingBusy !== null}
-              onClick={() => changeDailyInventory(selectedProductId, true)}
+              disabled={!availableProductId || trackingBusy !== null}
+              onClick={() => changeDailyInventory(availableProductId, true)}
             >
               Agregar
             </Button>
@@ -174,7 +159,7 @@ export function InventoryManager({ products, inventory }: Props) {
                       type="number"
                       min="0"
                       inputMode="numeric"
-                      value={stocks[product.id] ?? "0"}
+                      value={stocks[product.id] ?? String(row?.opening_stock ?? 0)}
                       onChange={(event) => setStocks((current) => ({ ...current, [product.id]: event.target.value }))}
                       className="h-12 text-right text-lg font-semibold"
                     />

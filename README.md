@@ -13,7 +13,7 @@ npm run dev
 
 Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-La página principal se encuentra en `app/page.tsx`.
+La página principal se encuentra en `app/(app)/page.tsx`.
 
 ## Tecnologías
 

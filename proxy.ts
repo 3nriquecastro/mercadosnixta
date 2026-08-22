@@ -1,10 +1,10 @@
-import { updateSession } from "@/lib/supabase/proxy"
 import { hasSupabaseConfig } from "@/lib/supabase/config"
-import { type NextRequest } from "next/server"
+import { updateSession } from "@/lib/supabase/proxy"
+import type { NextRequest } from "next/server"
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (!hasSupabaseConfig()) return
-  return await updateSession(request)
+  return updateSession(request)
 }
 
 export const config = {

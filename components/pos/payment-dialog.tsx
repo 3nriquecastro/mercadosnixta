@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -34,13 +34,6 @@ const METHODS: { key: PaymentMethod; label: string; icon: typeof Banknote }[] = 
 export function PaymentDialog({ open, onOpenChange, total, submitting, onConfirm }: Props) {
   const [method, setMethod] = useState<PaymentMethod | null>(null)
   const [cash, setCash] = useState("")
-
-  useEffect(() => {
-    if (open) {
-      setMethod(null)
-      setCash("")
-    }
-  }, [open])
 
   const cashNum = Number.parseFloat(cash) || 0
   const showCash = method === "efectivo" || method === "mixto"

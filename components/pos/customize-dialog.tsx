@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -24,12 +24,7 @@ type Props = {
 
 export function CustomizeDialog({ product, open, onOpenChange, onConfirm }: Props) {
   const config = product?.customization ?? null
-  const [choice, setChoice] = useState<string>("")
-
-  useEffect(() => {
-    if (!config) return
-    setChoice(defaultCustomization(config))
-  }, [config, product])
+  const [choice, setChoice] = useState(() => (config ? defaultCustomization(config) : ""))
 
   if (!product || !config) return null
 
