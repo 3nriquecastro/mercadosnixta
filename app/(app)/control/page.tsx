@@ -7,14 +7,17 @@ import { SaleHistoryManager } from "@/components/control/sale-history-manager"
 import { todayYMD, presetRange, type RangeKey } from "@/lib/dates"
 import { formatMoney, PAYMENT_LABELS } from "@/lib/format"
 import { getAllProducts, getInventoryForDate, getSalesForRange } from "@/lib/queries"
+import { requireProfile } from "@/lib/auth"
 
 type SearchParams = Record<string, string | string[] | undefined>
 
-const TABS = [
+const OWNER_TABS = [
   { key: "inventory", label: "Inventario" },
   { key: "sales", label: "Ventas" },
   { key: "products", label: "Productos" },
 ] as const
+
+const SELLER_TABS = OWNER_TABS.filter((tab) => tab.key !== "products")
 
 function getString(searchParams: SearchParams, key: string) {
   const value = searchParams[key]
@@ -51,11 +54,15 @@ export default async function ControlPage({
 }: {
   searchParams?: Promise<SearchParams>
 }) {
+  const profile = await requireProfile()
+  const isOwner = profile.role === "owner"
   const resolvedSearchParams = (await searchParams) ?? {}
 
   const rawTab = getString(resolvedSearchParams, "tab") || "inventory"
-  const activeTab = rawTab === "history" || rawTab === "calendar" ? "sales" : rawTab
-  const historyRange = pickRange(resolvedSearchParams)
+  const requestedTab = rawTab === "history" || rawTab === "calendar" ? "sales" : rawTab
+  const activeTab = !isOwner && requestedTab === "products" ? "inventory" : requestedTab
+  const historyRange = isOwner ? pickRange(resolvedSearchParams) : presetRange("hoy")
+  const tabs = isOwner ? OWNER_TABS : SELLER_TABS
 
   const [products, inventoryToday, sales] = await Promise.all([
     getAllProducts(),
@@ -114,8 +121,12 @@ export default async function ControlPage({
       <div className="flex flex-col gap-4 rounded-3xl border bg-card px-5 py-5 shadow-sm md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-sm text-muted-foreground">Control</p>
-          <h1 className="font-serif text-3xl font-semibold tracking-tight">Todo en una sola pantalla</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Inventario, ventas y productos en un flujo claro y rápido.</p>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight">
+            {isOwner ? "Todo en una sola pantalla" : "Operación de hoy"}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isOwner ? "Inventario, ventas y productos en un flujo claro y rápido." : "Tu inventario y tus ventas del día."}
+          </p>
         </div>
         <Button asChild className="h-12 px-5 text-base">
           <Link href="/vender">Ir a vender</Link>
@@ -123,7 +134,7 @@ export default async function ControlPage({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <Button key={tab.key} asChild variant={activeTab === tab.key ? "default" : "outline"}>
             <Link href={buildHref(tab.key, resolvedSearchParams)}>{tab.label}</Link>
           </Button>
@@ -134,34 +145,43 @@ export default async function ControlPage({
 
       {activeTab === "sales" && (
         <div className="space-y-4">
-          <Card>
-            <CardHeader className="border-b">
-              <CardTitle className="font-serif text-2xl">Periodo de ventas</CardTitle>
-              <CardDescription>Consulta un periodo rápido o selecciona fechas específicas.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-4">
-              <div className="flex flex-wrap gap-2">
-                {(Object.entries({ hoy: "Hoy", ayer: "Ayer", semana: "Esta semana", mes: "Este mes" }) as Array<[RangeKey, string]>).map(([key, label]) => (
-                  <Button key={key} asChild variant={getString(resolvedSearchParams, "range") === key ? "default" : "outline"}>
-                    <Link href={buildHref("sales", { ...resolvedSearchParams, range: key, from: undefined, to: undefined })}>{label}</Link>
-                  </Button>
-                ))}
-              </div>
+          {isOwner ? (
+            <Card>
+              <CardHeader className="border-b">
+                <CardTitle className="font-serif text-2xl">Periodo de ventas</CardTitle>
+                <CardDescription>Consulta un periodo rápido o selecciona fechas específicas.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-4">
+                <div className="flex flex-wrap gap-2">
+                  {(Object.entries({ hoy: "Hoy", ayer: "Ayer", semana: "Esta semana", mes: "Este mes" }) as Array<[RangeKey, string]>).map(([key, label]) => (
+                    <Button key={key} asChild variant={getString(resolvedSearchParams, "range") === key ? "default" : "outline"}>
+                      <Link href={buildHref("sales", { ...resolvedSearchParams, range: key, from: undefined, to: undefined })}>{label}</Link>
+                    </Button>
+                  ))}
+                </div>
 
-              <form className="grid gap-3 sm:grid-cols-2 md:grid-cols-[1fr_1fr_auto] md:items-end" action="/control" method="get">
-                <input type="hidden" name="tab" value="sales" />
-                <div className="grid gap-2">
-                  <label htmlFor="from" className="text-sm font-medium text-muted-foreground">Desde</label>
-                  <input id="from" name="from" type="date" defaultValue={historyRange.start} className="h-10 rounded-lg border border-input bg-background px-3" />
-                </div>
-                <div className="grid gap-2">
-                  <label htmlFor="to" className="text-sm font-medium text-muted-foreground">Hasta</label>
-                  <input id="to" name="to" type="date" defaultValue={historyRange.end} className="h-10 rounded-lg border border-input bg-background px-3" />
-                </div>
-                <Button type="submit" className="h-12 px-5 sm:col-span-2 md:col-span-1">Aplicar fechas</Button>
-              </form>
-            </CardContent>
-          </Card>
+                <form className="grid gap-3 sm:grid-cols-2 md:grid-cols-[1fr_1fr_auto] md:items-end" action="/control" method="get">
+                  <input type="hidden" name="tab" value="sales" />
+                  <div className="grid gap-2">
+                    <label htmlFor="from" className="text-sm font-medium text-muted-foreground">Desde</label>
+                    <input id="from" name="from" type="date" defaultValue={historyRange.start} className="h-10 rounded-lg border border-input bg-background px-3" />
+                  </div>
+                  <div className="grid gap-2">
+                    <label htmlFor="to" className="text-sm font-medium text-muted-foreground">Hasta</label>
+                    <input id="to" name="to" type="date" defaultValue={historyRange.end} className="h-10 rounded-lg border border-input bg-background px-3" />
+                  </div>
+                  <Button type="submit" className="h-12 px-5 sm:col-span-2 md:col-span-1">Aplicar fechas</Button>
+                </form>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-serif text-2xl">Tus ventas de hoy</CardTitle>
+                <CardDescription>Solo se muestran las ventas registradas con tu cuenta durante el día actual.</CardDescription>
+              </CardHeader>
+            </Card>
+          )}
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Card className="border-l-4 border-l-primary">
@@ -304,7 +324,7 @@ export default async function ControlPage({
         </div>
       )}
 
-      {activeTab === "products" && <ProductManager products={products} />}
+      {isOwner && activeTab === "products" && <ProductManager products={products} />}
     </div>
   )
 }

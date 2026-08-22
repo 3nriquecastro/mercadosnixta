@@ -6,6 +6,7 @@ import { LayoutDashboard, ShoppingCart, SlidersHorizontal, LogOut } from "lucide
 import { cn } from "@/lib/utils"
 import { BrandMark } from "@/components/brand-mark"
 import { signOut } from "@/lib/actions"
+import type { UserRole } from "@/lib/types"
 
 const NAV = [
   { href: "/", label: "Inicio", icon: LayoutDashboard },
@@ -18,7 +19,15 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-export function DesktopSidebar() {
+type NavProps = {
+  role: UserRole
+}
+
+function roleLabel(role: UserRole) {
+  return role === "owner" ? "Dueño" : "Vendedor"
+}
+
+export function DesktopSidebar({ role }: NavProps) {
   const pathname = usePathname()
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r bg-sidebar px-4 py-6 md:flex">
@@ -26,7 +35,7 @@ export function DesktopSidebar() {
         <BrandMark className="h-10 w-10 rounded-xl" />
         <div>
           <p className="font-serif text-lg font-semibold leading-tight">Mercados Nixta</p>
-          <p className="text-xs text-muted-foreground">Punto de venta</p>
+          <p className="text-xs text-muted-foreground">{roleLabel(role)}</p>
         </div>
       </div>
 
@@ -88,14 +97,14 @@ export function MobileTabBar() {
   )
 }
 
-export function MobileHeader() {
+export function MobileHeader({ role }: NavProps) {
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b bg-sidebar px-4 md:hidden">
       <div className="flex items-center gap-2">
         <BrandMark className="h-8 w-8 rounded-lg" />
         <div>
           <p className="font-serif text-sm font-semibold leading-tight">Mercados Nixta</p>
-          <p className="text-[10px] text-muted-foreground">Punto de venta</p>
+          <p className="text-[10px] text-muted-foreground">{roleLabel(role)}</p>
         </div>
       </div>
       <form action={signOut}>

@@ -4,6 +4,7 @@ import { todayYMD, ymdRangeToISO } from "@/lib/dates"
 import { hasSupabaseConfig } from "@/lib/supabase/config"
 import { normalizeCategory } from "@/lib/categories"
 import type { Product, InventoryRow, SaleWithItems } from "@/lib/types"
+import { getCurrentProfile } from "@/lib/auth"
 
 const DEMO_PRODUCTS: Product[] = [
   { id: "demo-tacos", name: "Tacos", category: "comida", price: 20, tracks_inventory: false, sort_order: 1, active: true, customization: { label: "Carne", options: [{ label: "Carne", price_delta: 0 }, { label: "Cambio de carne", price_delta: 0 }, { label: "Extra de carne", price_delta: 12 }] } },
@@ -30,6 +31,7 @@ const DEMO_SALES: SaleWithItems[] = [
   {
     id: "demo-sale-1",
     created_at: "2026-07-06T14:15:00.000Z",
+    created_by: "demo-owner",
     payment_method: "efectivo",
     total: 195,
     cash_received: 200,
@@ -43,6 +45,7 @@ const DEMO_SALES: SaleWithItems[] = [
   {
     id: "demo-sale-2",
     created_at: "2026-07-06T17:40:00.000Z",
+    created_by: "demo-owner",
     payment_method: "tarjeta",
     total: 110,
     cash_received: null,
@@ -71,6 +74,8 @@ export async function getAllProducts(): Promise<Product[]> {
 
 export async function getInventoryForDate(date: string): Promise<InventoryRow[]> {
   if (!hasSupabaseConfig()) return DEMO_INVENTORY.filter((row) => row.date === date)
+  const profile = await getCurrentProfile()
+  if (!profile || (profile.role === "seller" && date !== todayYMD())) return []
   const supabase = await createClient()
   const { data } = await supabase.from("inventory").select("*").eq("date", date)
   return (data ?? []) as InventoryRow[]
@@ -79,6 +84,13 @@ export async function getInventoryForDate(date: string): Promise<InventoryRow[]>
 export async function getSalesForRange(startYMD: string, endYMD: string): Promise<SaleWithItems[]> {
   if (!hasSupabaseConfig()) {
     return DEMO_SALES.filter((sale) => sale.created_at.slice(0, 10) >= startYMD && sale.created_at.slice(0, 10) <= endYMD)
+  }
+
+  const profile = await getCurrentProfile()
+  if (!profile) return []
+  if (profile.role === "seller") {
+    startYMD = todayYMD()
+    endYMD = startYMD
   }
 
   const supabase = await createClient()

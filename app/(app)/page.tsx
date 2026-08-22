@@ -4,9 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getDashboardData } from "@/lib/queries"
 import { formatMoney } from "@/lib/format"
 import { todayYMD } from "@/lib/dates"
+import { requireProfile } from "@/lib/auth"
 
 export default async function DashboardPage() {
+  const profile = await requireProfile()
   const data = await getDashboardData(todayYMD())
+  const isOwner = profile.role === "owner"
 
   return (
     <div className="space-y-6 px-4 py-4 lg:px-6">
@@ -14,7 +17,9 @@ export default async function DashboardPage() {
         <div>
           <p className="text-sm text-muted-foreground">Dashboard</p>
           <h1 className="font-serif text-3xl font-semibold tracking-tight">Resumen de hoy</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Todo lo importante en una sola vista.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isOwner ? "Todas las ventas e inventario del negocio." : "Tus ventas y el inventario de hoy."}
+          </p>
         </div>
         <Button asChild className="h-12 px-5 text-base">
           <Link href="/control">Ir a control</Link>

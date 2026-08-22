@@ -8,6 +8,14 @@ export type ProductCustomization = {
   options: CustomizationOption[]
 }
 
+export type UserRole = "owner" | "seller"
+
+export type Profile = {
+  id: string
+  role: UserRole
+  display_name: string | null
+}
+
 export type Product = {
   id: string
   name: string
@@ -42,6 +50,7 @@ export type PaymentMethod = "efectivo" | "tarjeta" | "transferencia" | "mixto" |
 export type Sale = {
   id: string
   created_at: string
+  created_by: string | null
   payment_method: PaymentMethod
   total: number
   cash_received: number | null

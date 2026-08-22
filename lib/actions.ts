@@ -7,6 +7,7 @@ import { redirect } from "next/navigation"
 import type { PaymentMethod, ProductCustomization } from "@/lib/types"
 import { hasSupabaseConfig } from "@/lib/supabase/config"
 import { CATEGORY_ORDER, type ProductCategory } from "@/lib/categories"
+import { getCurrentProfile } from "@/lib/auth"
 
 function revalidatePos() {
   revalidatePath("/")
@@ -73,6 +74,7 @@ export async function createSale(input: CreateSaleInput) {
   const { data: sale, error: saleError } = await supabase
     .from("sales")
     .insert({
+      created_by: user.id,
       payment_method: input.payment_method,
       total: chargedTotal,
       cash_received: fullComplimentary ? null : input.cash_received,
@@ -339,6 +341,9 @@ export async function removeProductFromInventory(productId: string) {
 export async function toggleProduct(productId: string, active: boolean) {
   if (!hasSupabaseConfig()) return { ok: true }
 
+  const profile = await getCurrentProfile()
+  if (profile?.role !== "owner") return { ok: false, error: "Solo el dueño puede modificar productos" }
+
   const supabase = await createClient()
   const {
     data: { user },
@@ -362,6 +367,9 @@ export async function saveProduct(input: {
   customization: ProductCustomization | null
 }) {
   if (!hasSupabaseConfig()) return { ok: true, productId: input.id ?? "demo" }
+
+  const profile = await getCurrentProfile()
+  if (profile?.role !== "owner") return { ok: false, error: "Solo el dueño puede modificar productos" }
 
   const supabase = await createClient()
   const {
@@ -407,6 +415,9 @@ export async function saveProduct(input: {
 
 export async function deleteProduct(productId: string) {
   if (!hasSupabaseConfig()) return { ok: true }
+
+  const profile = await getCurrentProfile()
+  if (profile?.role !== "owner") return { ok: false, error: "Solo el dueño puede eliminar productos" }
 
   const supabase = await createClient()
   const {

@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { BrandMark } from "@/components/brand-mark"
@@ -81,10 +80,7 @@ export default function LoginPage() {
             </Button>
           </form>
           <p className="mt-5 text-center text-sm text-muted-foreground">
-            ¿No tienes cuenta?{" "}
-            <Link href="/auth/sign-up" className="font-medium text-foreground underline underline-offset-4">
-              Crear cuenta
-            </Link>
+            Las cuentas son creadas únicamente por el administrador del negocio.
           </p>
         </div>
       </div>
