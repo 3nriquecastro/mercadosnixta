@@ -19,45 +19,6 @@ const DEMO_PRODUCTS: Product[] = [
   { id: "demo-vasos", name: "Vasos de agua", category: "bebidas", price: 0, tracks_inventory: false, sort_order: 10, active: false, customization: null },
 ]
 
-const DEMO_DATE = todayYMD()
-const DEMO_INVENTORY: InventoryRow[] = [
-  { product_id: "demo-micheladas", date: DEMO_DATE, opening_stock: 24, current_stock: 17 },
-  { product_id: "demo-guacamole", date: DEMO_DATE, opening_stock: 12, current_stock: 8 },
-  { product_id: "demo-tortillas-500", date: DEMO_DATE, opening_stock: 30, current_stock: 26 },
-  { product_id: "demo-tortillas-1kg", date: DEMO_DATE, opening_stock: 15, current_stock: 9 },
-]
-
-const DEMO_SALES: SaleWithItems[] = [
-  {
-    id: "demo-sale-1",
-    created_at: "2026-07-06T14:15:00.000Z",
-    created_by: "demo-owner",
-    payment_method: "efectivo",
-    total: 195,
-    cash_received: 200,
-    change_given: 5,
-    sale_items: [
-      { id: "demo-item-1", sale_id: "demo-sale-1", product_id: "demo-tacos", product: "Tacos", quantity: 3, unit_price: 20, customization: "Carne", subtotal: 60, complimentary: false },
-      { id: "demo-item-2", sale_id: "demo-sale-1", product_id: "demo-micheladas", product: "Micheladas", quantity: 2, unit_price: 60, customization: "Cruda", subtotal: 120, complimentary: false },
-      { id: "demo-item-3", sale_id: "demo-sale-1", product_id: "demo-guacamole", product: "Guacamole", quantity: 1, unit_price: 50, customization: null, subtotal: 50, complimentary: false },
-    ],
-  },
-  {
-    id: "demo-sale-2",
-    created_at: "2026-07-06T17:40:00.000Z",
-    created_by: "demo-owner",
-    payment_method: "tarjeta",
-    total: 110,
-    cash_received: null,
-    change_given: null,
-    sale_items: [
-      { id: "demo-item-4", sale_id: "demo-sale-2", product_id: "demo-quesadillas", product: "Quesadillas", quantity: 2, unit_price: 35, customization: null, subtotal: 70, complimentary: false },
-      { id: "demo-item-5", sale_id: "demo-sale-2", product_id: "demo-tortillas-500", product: "Tortillas 500 g", quantity: 1, unit_price: 15, customization: null, subtotal: 15, complimentary: false },
-      { id: "demo-item-6", sale_id: "demo-sale-2", product_id: "demo-totopos", product: "Totopos", quantity: 1, unit_price: 30, customization: null, subtotal: 30, complimentary: false },
-    ],
-  },
-]
-
 export async function getActiveProducts(): Promise<Product[]> {
   if (!hasSupabaseConfig()) return DEMO_PRODUCTS.filter((product) => product.active)
   const supabase = await createClient()
@@ -73,7 +34,7 @@ export async function getAllProducts(): Promise<Product[]> {
 }
 
 export async function getInventoryForDate(date: string): Promise<InventoryRow[]> {
-  if (!hasSupabaseConfig()) return DEMO_INVENTORY.filter((row) => row.date === date)
+  if (!hasSupabaseConfig()) return []
   const profile = await getCurrentProfile()
   if (!profile || (profile.role === "seller" && date !== todayYMD())) return []
   const supabase = await createClient()
@@ -82,9 +43,7 @@ export async function getInventoryForDate(date: string): Promise<InventoryRow[]>
 }
 
 export async function getSalesForRange(startYMD: string, endYMD: string): Promise<SaleWithItems[]> {
-  if (!hasSupabaseConfig()) {
-    return DEMO_SALES.filter((sale) => sale.created_at.slice(0, 10) >= startYMD && sale.created_at.slice(0, 10) <= endYMD)
-  }
+  if (!hasSupabaseConfig()) return []
 
   const profile = await getCurrentProfile()
   if (!profile) return []
